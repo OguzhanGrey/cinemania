@@ -22,5 +22,16 @@
     "izitoast": "^1.4.0",
     "vite-plugin-full-reload": "^1.2.0",
     "vite-plugin-html-inject": "^1.1.2"
-  }
+  },
+  "main": "vite.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OguzhanGrey/cinemania.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/OguzhanGrey/cinemania/issues"
+  },
+  "homepage": "https://github.com/OguzhanGrey/cinemania#readme",
+  "description": ""
 }

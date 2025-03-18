@@ -4,6 +4,17 @@ const API_KEY = '8a0658d1a6872272a1ed1ab9af543174';
 const API_BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
 
+// API configuration
+const apiBaseUrl = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  params: {
+    api_key: API_KEY,
+  },
+});
+
 // Cache DOM elements
 const domElements = {
   weeklyMovieList: document.querySelector('.weekly-movie-list'),
@@ -22,17 +33,6 @@ const domElements = {
   errorModalCloseBtn: document.querySelector('#errorModal .modal-close-btn'),
   errorMessage: document.querySelector('.error-message'),
 };
-
-// API configuration
-const apiBaseUrl = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  params: {
-    api_key: API_KEY,
-  },
-});
 
 // Utility functions
 const fetchData = async (endpoint, params = {}) => {

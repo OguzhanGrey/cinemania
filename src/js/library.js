@@ -1,3 +1,19 @@
+import axios from 'axios';
+
+// API configuration
+const API_KEY = '8a0658d1a6872272a1ed1ab9af543174';
+const API_BASE_URL = 'https://api.themoviedb.org/3';
+
+const apiBaseUrl = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  params: {
+    api_key: API_KEY,
+  },
+});
+
 // DOM Elements
 const domElements = {
   themeSwitch: document.getElementById('theme-switch'),
@@ -18,20 +34,6 @@ const domElements = {
   genreSelect: document.querySelector('.genre-select'),
   loadMoreBtn: document.querySelector('.load-more-btn'),
 };
-
-// API configuration
-const API_KEY = '8a0658d1a6872272a1ed1ab9af543174';
-const API_BASE_URL = 'https://api.themoviedb.org/3';
-
-const apiBaseUrl = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  params: {
-    api_key: API_KEY,
-  },
-});
 
 // Utility functions
 const fetchData = async (endpoint, params = {}) => {
