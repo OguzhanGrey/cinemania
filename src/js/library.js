@@ -59,24 +59,28 @@ const createStarRating = rating => {
 
 // Theme Functions
 const initTheme = () => {
-  const savedTheme = localStorage.getItem('theme');
-  if (savedTheme === 'light') {
-    document.documentElement.setAttribute('data-theme', 'light');
-    domElements.themeSwitch.checked = false;
-  } else {
-    document.documentElement.removeAttribute('data-theme');
-    domElements.themeSwitch.checked = true;
-  }
-
-  domElements.themeSwitch.addEventListener('change', () => {
-    if (domElements.themeSwitch.checked) {
-      document.documentElement.removeAttribute('data-theme');
-      localStorage.setItem('theme', 'dark');
-    } else {
+  try {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
       document.documentElement.setAttribute('data-theme', 'light');
-      localStorage.setItem('theme', 'light');
+      domElements.themeSwitch.checked = false;
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      domElements.themeSwitch.checked = true;
     }
-  });
+
+    domElements.themeSwitch.addEventListener('change', () => {
+      if (domElements.themeSwitch.checked) {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme', 'light');
+      }
+    });
+  } catch (error) {
+    console.error('Error initializing theme:', error);
+  }
 };
 
 // Library Functions

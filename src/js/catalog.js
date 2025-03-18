@@ -13,7 +13,6 @@ const domElements = {
   prevButton: document.querySelector('.slider-button.prev'),
   nextButton: document.querySelector('.slider-button.next'),
   themeSwitch: document.getElementById('theme-switch'),
-  upcomingMovieList: document.querySelector('.upcoming-movies-list'),
   modal: document.getElementById('movieDetailsModal'),
   modalCloseBtn: document.querySelector('.modal-close-btn'),
   videoModal: document.getElementById('videoModal'),
@@ -331,143 +330,6 @@ domElements.modal.addEventListener('click', e => {
     closeModal();
   }
 });
-
-// Render functions
-const renderUpcomingMovies = async () => {
-  try {
-    const currentDate = new Date();
-    const lastDayOfMonth = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth() + 1,
-      0
-    );
-
-    const data = await fetchData('/movie/upcoming', {
-      region: 'US',
-      language: 'en-US',
-    });
-
-    if (!data?.results) return;
-
-    const thisMonthMovies = data.results
-      .filter(movie => {
-        const releaseDate = new Date(movie.release_date);
-        return (
-          releaseDate <= lastDayOfMonth &&
-          releaseDate >= currentDate &&
-          movie.backdrop_path &&
-          movie.title &&
-          movie.vote_average > 0
-        );
-      })
-      .sort((a, b) => b.popularity - a.popularity)
-      .slice(0, 3);
-
-    if (thisMonthMovies.length === 0) {
-      domElements.upcomingMovieList.innerHTML =
-        '<p>No upcoming movies available for this month.</p>';
-      return;
-    }
-
-    const moviePromises = thisMonthMovies.map(async movie => {
-      const movieDetails = await fetchData(`/movie/${movie.id}`);
-      const genreNames = getGenreNames(movieDetails?.genres, 3);
-      const library = JSON.parse(localStorage.getItem('library') || '[]');
-      const isInLibrary = library.some(m => m.id === movie.id);
-
-      return `
-        <li class="upcoming-movie-item">
-          <a class="upcoming-movie-link" href="#">
-            <div class="upcoming-movie-image-container">
-              <img class="upcoming-movie-image" src="https://image.tmdb.org/t/p/w1280${
-                movie.backdrop_path
-              }" alt="${movie.title}">
-            </div>
-            <div class="upcoming-movie-info">
-              <h3 class="movie-title">${movie.title}</h3>
-              <div class="info-section">
-                <div class="info-row">
-                  <span class="info-label">Release Date</span>
-                  <span class="info-value-date">${formatDate(
-                    movie.release_date
-                  )}</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label">Vote / Votes</span>
-                  <span class="info-value-rating">
-                    ${movie.vote_average.toFixed(
-                      1
-                    )} / ${movie.vote_count.toLocaleString()} votes
-                  </span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label">Popularity</span>
-                  <span class="info-value-popularity">${Math.round(
-                    movie.popularity
-                  ).toLocaleString()}</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label">Genre</span>
-                  <span class="info-value-genre">${genreNames}</span>
-                </div>
-              </div>
-              <div class="movie-about">
-                <h4 class="about-label">ABOUT</h4>
-                <p class="about-text">${movie.overview}</p>
-              </div>
-              <button class="add-to-library ${
-                isInLibrary ? 'added' : ''
-              }" data-movie-id="${movie.id}">
-                <i class="fas ${isInLibrary ? 'fa-check' : 'fa-plus'}"></i>
-                ${isInLibrary ? 'Added to library' : 'Add to my library'}
-              </button>
-            </div>
-          </a>
-        </li>
-      `;
-    });
-
-    const movieItems = await Promise.all(moviePromises);
-    domElements.upcomingMovieList.innerHTML = movieItems.join('');
-
-    // Add click event listeners using event delegation
-    domElements.upcomingMovieList.addEventListener('click', e => {
-      const button = e.target.closest('.add-to-library');
-      if (!button) return;
-
-      e.preventDefault();
-      const movieId = parseInt(button.dataset.movieId);
-      const movie = thisMonthMovies.find(m => m.id === movieId);
-
-      if (!movie) return;
-
-      // Get movie data
-      const movieData = {
-        id: movieId,
-        title: movie.title,
-        poster_path: movie.poster_path,
-        release_date: movie.release_date,
-        vote_average: movie.vote_average,
-      };
-
-      // Update button state
-      button.innerHTML = '<i class="fas fa-check"></i> Added to library';
-      button.style.background = '#2ecc71';
-      button.disabled = true;
-
-      // Store in localStorage
-      let library = JSON.parse(localStorage.getItem('library') || '[]');
-      if (!library.some(m => m.id === movieId)) {
-        library.push(movieData);
-        localStorage.setItem('library', JSON.stringify(library));
-      }
-    });
-  } catch (error) {
-    console.error('Error rendering upcoming movies:', error);
-    domElements.upcomingMovieList.innerHTML =
-      '<p>Error loading upcoming movies.</p>';
-  }
-};
 
 // Hero bölümünü film detaylarıyla güncelle
 async function updateHeroWithMovie(movie) {
@@ -1006,11 +868,16 @@ const updateLibraryButtons = () => {
 };
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+const initCatalog = () => {
   initTheme();
   fetchWeeklyTrendingMovies();
-  renderUpcomingMovies();
-  updatePaginationUI();
+  initSearch();
+  initYearFilter();
+  initPagination();
+};
+
+document.addEventListener('DOMContentLoaded', async () => {
+  initCatalog();
   updateLibraryButtons();
 
   // Arama butonuna tıklama olayı ekle

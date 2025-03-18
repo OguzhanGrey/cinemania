@@ -12,16 +12,16 @@
       href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./css/library.css" />
+    <link rel="stylesheet" href="css/library.css" />
   </head>
   <body>
     <section class="hero">
       <header class="header">
         <nav class="nav">
           <div class="logo">
-            <a href="/cinemania/" class="homepage-btn">
+            <a href="index.html" class="homepage-btn">
               <svg class="homepage-svg">
-                <use href="./assets/icons/icons.svg#homepage-logo"></use>
+                <use href="assets/icons/icons.svg#homepage-logo"></use>
               </svg>
             </a>
             <span class="home-text">Cinemania</span>
@@ -37,14 +37,14 @@
             <input type="checkbox" id="theme-switch" />
             <label for="theme-switch" class="toggle-label">
               <svg class="icon moon" width="15" height="15">
-                <use href="./assets/icons/icons.svg#icon-moon"></use>
+                <use href="assets/icons/icons.svg#icon-moon"></use>
               </svg>
               <svg class="icon sun" width="16" height="16">
-                <use href="./assets/icons/icons.svg#icon-sun"></use>
+                <use href="assets/icons/icons.svg#icon-sun"></use>
               </svg>
               <span class="ball">
                 <svg width="18" height="18">
-                  <use href="./assets/icons/icons.svg#icon-ball"></use>
+                  <use href="assets/icons/icons.svg#icon-ball"></use>
                 </svg>
               </span>
             </label>
@@ -135,6 +135,14 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="./js/library.js"></script>
+    <script src="js/library.js"></script>
+    <script>
+      // Ensure theme is initialized after DOM is loaded
+      document.addEventListener('DOMContentLoaded', () => {
+        if (typeof initTheme === 'function') {
+          initTheme();
+        }
+      });
+    </script>
   </body>
 </html>
