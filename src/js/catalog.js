@@ -15,7 +15,6 @@ const apiBaseUrl = axios.create({
   },
 });
 
-// Cache DOM elements
 const domElements = {
   weeklyMovieList: document.querySelector('.weekly-movie-list'),
   hero: document.querySelector('.hero'),
@@ -32,6 +31,12 @@ const domElements = {
   errorModal: document.getElementById('errorModal'),
   errorModalCloseBtn: document.querySelector('#errorModal .modal-close-btn'),
   errorMessage: document.querySelector('.error-message'),
+  movieGrid: document.querySelector('.movie-grid'),
+  catalogList: document.querySelector('.catalog-list'),
+  genreSelect: document.querySelector('.genre-select'),
+  loadMoreBtn: document.querySelector('.load-more-btn'),
+  hamburgerMenu: document.querySelector('.hamburger-menu'),
+  navLinks: document.querySelector('.nav-links'),
 };
 
 // Utility functions
@@ -593,7 +598,7 @@ async function handlePageClick(pageNumber) {
 
   try {
     isLoading = true;
-    const data = await fetchData('/movie/popular', {
+    const data = await fetchData('/trending/movie/week', {
       page: pageNumber,
       language: 'en-US',
     });
@@ -899,3 +904,174 @@ document.addEventListener('DOMContentLoaded', async () => {
     handleYearFilter(selectedYear);
   });
 });
+
+// Pagination functionality
+function updatePagination(currentPage, totalPages) {
+  const paginationContainer = document.querySelector('.pagination');
+  if (!paginationContainer) return;
+
+  let paginationHTML = '';
+
+  // Previous button
+  paginationHTML += `
+    <button class="pagination-btn" data-page="${currentPage - 1}" ${
+    currentPage === 1 ? 'disabled' : ''
+  }>
+      <i class="fas fa-chevron-left"></i>
+    </button>
+  `;
+
+  // Page numbers
+  for (let i = 1; i <= totalPages; i++) {
+    if (
+      i === 1 ||
+      i === totalPages ||
+      (i >= currentPage - 1 && i <= currentPage + 1)
+    ) {
+      paginationHTML += `
+        <button class="pagination-btn ${
+          i === currentPage ? 'active' : ''
+        }" data-page="${i}">
+          ${i}
+        </button>
+      `;
+    } else if (i === currentPage - 2 || i === currentPage + 2) {
+      paginationHTML += '<span class="page-dots">...</span>';
+    }
+  }
+
+  // Next button
+  paginationHTML += `
+    <button class="pagination-btn" data-page="${currentPage + 1}" ${
+    currentPage === totalPages ? 'disabled' : ''
+  }>
+      <i class="fas fa-chevron-right"></i>
+    </button>
+  `;
+
+  paginationContainer.innerHTML = paginationHTML;
+}
+
+// Event delegation for pagination
+document.addEventListener('DOMContentLoaded', () => {
+  const paginationContainer = document.querySelector('.pagination');
+  if (paginationContainer) {
+    paginationContainer.addEventListener('click', e => {
+      const button = e.target.closest('.pagination-btn');
+      if (!button || button.disabled) return;
+
+      const page = parseInt(button.dataset.page);
+      if (!isNaN(page)) {
+        renderMovies(page);
+      }
+    });
+  }
+});
+
+// Update renderMovies function to handle pagination
+const renderMovies = async (page = 1) => {
+  try {
+    const year = document.getElementById('year-select').value;
+    const searchQuery = document.getElementById('search-input').value;
+    const data = await fetchData('/discover/movie', {
+      page,
+      year,
+      query: searchQuery,
+      language: 'en-US',
+      include_adult: true,
+    });
+
+    if (!data?.results) {
+      domElements.movieGrid.innerHTML = '<p>No movies found.</p>';
+      return;
+    }
+
+    const moviesHTML = data.results
+      .map(movie => {
+        const posterPath = movie.poster_path
+          ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+          : 'https://via.placeholder.com/500x750?text=No+Image';
+        const releaseYear = movie.release_date
+          ? movie.release_date.split('-')[0]
+          : 'N/A';
+
+        return `
+          <div class="movie-item">
+            <a href="#" class="movie-link" data-id="${movie.id}">
+              <div class="movie-image-container">
+                <img src="${posterPath}" alt="${
+          movie.title
+        }" class="movie-image" />
+                <div class="movie-info">
+                  <h3 class="movie-title">${movie.title}</h3>
+                  <div class="movie-meta">
+                    <span class="movie-year">${releaseYear}</span>
+                    <span class="movie-meta-divider">•</span>
+                    <span class="movie-rating">
+                      <i class="fas fa-star"></i>
+                      ${movie.vote_average.toFixed(1)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+        `;
+      })
+      .join('');
+
+    domElements.movieGrid.innerHTML = moviesHTML;
+
+    // Update pagination
+    updatePagination(page, Math.min(data.total_pages, 500));
+
+    // Add event listeners to movie links
+    const movieLinks = domElements.movieGrid.querySelectorAll('.movie-link');
+    movieLinks.forEach(link => {
+      link.addEventListener('click', async e => {
+        e.preventDefault();
+        const movieId = link.dataset.id;
+        await showMovieDetails(movieId);
+      });
+    });
+  } catch (error) {
+    console.error('Error fetching movies:', error);
+    domElements.movieGrid.innerHTML =
+      '<p>Error loading movies. Please try again.</p>';
+  }
+};
+
+// Initialize the page
+document.addEventListener('DOMContentLoaded', () => {
+  renderMovies();
+});
+
+// Hamburger Menu Functions
+const initHamburgerMenu = () => {
+  domElements.hamburgerMenu.addEventListener('click', () => {
+    domElements.hamburgerMenu.classList.toggle('active');
+    domElements.navLinks.classList.toggle('active');
+  });
+
+  // Close menu when clicking outside
+  document.addEventListener('click', e => {
+    if (
+      !domElements.hamburgerMenu.contains(e.target) &&
+      !domElements.navLinks.contains(e.target)
+    ) {
+      domElements.hamburgerMenu.classList.remove('active');
+      domElements.navLinks.classList.remove('active');
+    }
+  });
+
+  // Close menu when clicking on a link
+  domElements.navLinks.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      domElements.hamburgerMenu.classList.remove('active');
+      domElements.navLinks.classList.remove('active');
+    });
+  });
+};
+
+// Initialize hamburger menu
+initHamburgerMenu();

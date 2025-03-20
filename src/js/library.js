@@ -14,7 +14,6 @@ const apiBaseUrl = axios.create({
   },
 });
 
-// DOM Elements
 const domElements = {
   themeSwitch: document.getElementById('theme-switch'),
   libraryList: document.querySelector('.added-library-list'),
@@ -33,9 +32,11 @@ const domElements = {
   ),
   genreSelect: document.querySelector('.genre-select'),
   loadMoreBtn: document.querySelector('.load-more-btn'),
+  hamburgerMenu: document.querySelector('.hamburger-menu'),
+  navLinks: document.querySelector('.nav-links'),
 };
 
-// Utility functions
+//important
 const fetchData = async (endpoint, params = {}) => {
   try {
     const response = await apiBaseUrl.get(endpoint, { params });
@@ -47,19 +48,28 @@ const fetchData = async (endpoint, params = {}) => {
 };
 
 const createStarRating = rating => {
+  const fullStars = Math.floor(rating / 2);
+  const hasHalfStar = rating % 2 >= 1;
+
   return Array(5)
     .fill()
-    .map(
-      (_, index) => `
-      <i class="fas fa-star ${
-        index < Math.round(rating / 2) ? 'filled' : ''
-      }"></i>
-    `
-    )
+    .map((_, index) => {
+      if (index < fullStars) {
+        return '<i class="fas fa-star"></i>';
+      } else if (index === fullStars && hasHalfStar) {
+        return '<i class="fas fa-star-half-alt"></i>';
+      } else {
+        return '<i class="fas fa-star empty"></i>';
+      }
+    })
     .join('');
 };
 
-// Theme Functions
+const createSingleStar = rating => {
+  return '<i class="fas fa-star"></i>';
+};
+
+// Theme function
 const initTheme = () => {
   try {
     const savedTheme = localStorage.getItem('theme');
@@ -87,15 +97,11 @@ const initTheme = () => {
 
 // Library Functions
 const addToLibrary = async movie => {
-  // Get existing library from localStorage
   let library = JSON.parse(localStorage.getItem('library') || '[]');
 
-  // Check if movie already exists
   if (!library.some(m => m.id === movie.id)) {
-    // Fetch movie details to get genres
     const movieDetails = await fetchData(`/movie/${movie.id}`);
 
-    // Add movie with genres to library
     library.push({
       ...movie,
       genres: movieDetails.genres.map(genre => genre.name),
@@ -174,7 +180,6 @@ const displayLibraryMovies = (selectedGenre = '') => {
   domElements.loadMoreBtn.style.display =
     endIndex >= filteredMovies.length ? 'none' : 'block';
 
-  // Create HTML for new movies
   const newMoviesHTML = currentMovies
     .map(
       movie => `
@@ -187,7 +192,7 @@ const displayLibraryMovies = (selectedGenre = '') => {
           onerror="this.src='https://via.placeholder.com/500x750?text=No+Image'"
         />
         <div class="movie-rating">
-          <i class="fas fa-star"></i>
+          ${createSingleStar(movie.vote_average)}
           <span>${movie.vote_average.toFixed(1)}</span>
         </div>
         <div class="movie-year">${
@@ -210,21 +215,17 @@ const displayLibraryMovies = (selectedGenre = '') => {
     )
     .join('');
 
-  // If it's the first page, replace the content
   if (currentPage === 1) {
     domElements.libraryList.innerHTML = newMoviesHTML;
   } else {
-    // Otherwise, append new movies
     domElements.libraryList.insertAdjacentHTML('beforeend', newMoviesHTML);
   }
 
-  // Add event listeners for the new movies
   addMovieEventListeners();
 };
 
 // Add event listeners for movies
 const addMovieEventListeners = () => {
-  // Add event listeners to movie links
   document.querySelectorAll('.weekly-movie-link').forEach(link => {
     link.addEventListener('click', async e => {
       e.preventDefault();
@@ -328,7 +329,7 @@ const removeFromLibrary = movieId => {
     movieCard.remove();
   }
 
-  // Eğer kütüphane boşsa, boş kütüphane mesajını göster
+  // kutuphane bossa
   if (library.length === 0) {
     domElements.libraryList.innerHTML = `
       <li class="empty-library">
@@ -338,7 +339,7 @@ const removeFromLibrary = movieId => {
     domElements.loadMoreBtn.style.display = 'none';
   }
 
-  // Diğer sayfalara silme işlemini bildir
+  // Diger sayfalara silme islemini bildir
   window.postMessage(
     {
       type: 'removeFromLibrary',
@@ -459,7 +460,34 @@ const closeMovieDetailsModal = () => {
   document.body.style.overflow = '';
 };
 
-// Initialize
+// Hamburger Menu Functions
+const initHamburgerMenu = () => {
+  domElements.hamburgerMenu.addEventListener('click', () => {
+    domElements.hamburgerMenu.classList.toggle('active');
+    domElements.navLinks.classList.toggle('active');
+  });
+
+  // Close menu when clicking outside
+  document.addEventListener('click', e => {
+    if (
+      !domElements.hamburgerMenu.contains(e.target) &&
+      !domElements.navLinks.contains(e.target)
+    ) {
+      domElements.hamburgerMenu.classList.remove('active');
+      domElements.navLinks.classList.remove('active');
+    }
+  });
+
+  domElements.navLinks.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      domElements.hamburgerMenu.classList.remove('active');
+      domElements.navLinks.classList.remove('active');
+    });
+  });
+};
+
+initHamburgerMenu();
+
 document.addEventListener('DOMContentLoaded', async () => {
   initTheme();
   await updateLibraryGenres();
@@ -467,7 +495,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Add genre filter event listener
   domElements.genreSelect.addEventListener('change', e => {
-    currentPage = 1; // Reset page when genre changes
+    currentPage = 1;
     displayLibraryMovies(e.target.value);
   });
 

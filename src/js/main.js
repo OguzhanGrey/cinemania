@@ -15,6 +15,7 @@ const apiBaseUrl = axios.create({
 
 // Cache DOM elements
 const domElements = {
+  heroContentBtn: document.querySelector('.hero-content-btn'),
   upcomingMovieLink: document.querySelector('.upcoming-movie-link'),
   weeklyMovieList: document.querySelector('.weekly-movie-list'),
   hero: document.querySelector('.hero'),
@@ -35,7 +36,11 @@ const domElements = {
 };
 
 
-// Utility functions
+domElements.heroContentBtn.addEventListener('click', () => {
+  window.location.href = '/cinemania/catalog.html';
+});
+
+
 const fetchData = async (endpoint, params = {}) => {
   try {
     const response = await apiBaseUrl.get(endpoint, { params });
@@ -454,41 +459,27 @@ const renderWeeklyMovies = async () => {
 
 const renderUpcomingMovies = async () => {
   try {
-    const currentDate = new Date();
-    const lastDayOfMonth = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth() + 1,
-      0
-    );
+    const data = await fetchData('/movie/upcoming');
 
-    const data = await fetchData('/movie/upcoming', {
-      region: 'US',
-      language: 'en-US',
-    });
-
-    if (!data?.results) return;
-
-    const thisMonthMovies = data.results
-      .filter(movie => {
-        const releaseDate = new Date(movie.release_date);
-        return (
-          releaseDate <= lastDayOfMonth &&
-          releaseDate >= currentDate &&
-          movie.backdrop_path &&
-          movie.title &&
-          movie.vote_average > 0
-        );
-      })
-      .sort((a, b) => b.popularity - a.popularity)
-      .slice(0, 5);
-
-    if (thisMonthMovies.length === 0) {
+    if (!data?.results) {
       domElements.upcomingMovieList.innerHTML =
-        '<p>No upcoming movies available for this month.</p>';
+        '<p>No upcoming movies available.</p>';
       return;
     }
 
-    const moviePromises = thisMonthMovies.map(async movie => {
+    // Sort movies by popularity and filter out movies without images
+    const topMovies = data.results
+      .filter(movie => movie.backdrop_path && movie.poster_path)
+      .sort((a, b) => b.popularity - a.popularity)
+      .slice(0, 5);
+
+    if (topMovies.length === 0) {
+      domElements.upcomingMovieList.innerHTML =
+        '<p>No upcoming movies with images available.</p>';
+      return;
+    }
+
+    const moviePromises = topMovies.map(async movie => {
       const movieDetails = await fetchData(`/movie/${movie.id}`);
       const genreNames = getGenreNames(movieDetails?.genres, 3);
       const library = JSON.parse(localStorage.getItem('library') || '[]');
@@ -512,7 +503,7 @@ const renderUpcomingMovies = async () => {
                   )}</span>
                 </div>
                 <div class="info-row">
-                  <span class="info-label">Vote / Votes</span>
+                  <span class="info-label">Rating</span>
                   <span class="info-value-rating">
                     ${movie.vote_average.toFixed(
                       1
@@ -550,22 +541,27 @@ const renderUpcomingMovies = async () => {
     domElements.upcomingMovieList.innerHTML = movieItems.join('');
 
     // Add click event listeners using event delegation
-    domElements.upcomingMovieList.addEventListener('click', e => {
+    domElements.upcomingMovieList.addEventListener('click', async e => {
       const button = e.target.closest('.add-to-library');
       if (button) {
         e.preventDefault();
         const movieId = parseInt(button.dataset.movieId);
-        const movie = thisMonthMovies.find(m => m.id === movieId);
+        const movie = topMovies.find(m => m.id === movieId);
 
         if (!movie) return;
 
-        // Get movie data
+        // Get movie details for complete data
+        const movieDetails = await fetchData(`/movie/${movieId}`);
+
+        // Get movie data with consistent format
         const movieData = {
           id: movieId,
           title: movie.title,
           poster_path: movie.poster_path,
           release_date: movie.release_date,
           vote_average: movie.vote_average,
+          genres: movieDetails.genres.map(g => g.name).join(', '),
+          overview: movie.overview,
         };
 
         // Update button state
@@ -594,7 +590,7 @@ const renderUpcomingMovies = async () => {
   } catch (error) {
     console.error('Error rendering upcoming movies:', error);
     domElements.upcomingMovieList.innerHTML =
-      '<p>Error loading upcoming movies.</p>';
+      '<p>Error loading upcoming movies. Please try again later.</p>';
   }
 };
 
@@ -622,6 +618,30 @@ window.addEventListener('message', event => {
     }
   }
 });
+// Hamburger Menu Functionality
+const hamburgerMenu = document.querySelector('.hamburger-menu');
+const navLinks = document.querySelector('.nav-links');
+
+hamburgerMenu.addEventListener('click', () => {
+  hamburgerMenu.classList.toggle('active');
+  navLinks.classList.toggle('active');
+});
+
+// Close menu when clicking outside
+document.addEventListener('click', e => {
+  if (!hamburgerMenu.contains(e.target) && !navLinks.contains(e.target)) {
+    hamburgerMenu.classList.remove('active');
+    navLinks.classList.remove('active');
+  }
+});
+
+// Close menu when clicking on a link
+navLinks.querySelectorAll('a').forEach(link => {
+  link.addEventListener('click', () => {
+    hamburgerMenu.classList.remove('active');
+    navLinks.classList.remove('active');
+  });
+});
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -629,3 +649,23 @@ document.addEventListener('DOMContentLoaded', () => {
   renderWeeklyMovies();
   renderUpcomingMovies();
 });
+
+function slideWeeklyMovies(direction) {
+  const container = document.querySelector('.weekly-movie-list');
+  const itemWidth = container.children[0].offsetWidth + 16;
+  const slideAmount = itemWidth * 8;
+  const currentTransform = getComputedStyle(container).transform;
+  const matrix = new DOMMatrix(currentTransform);
+  const currentTranslate = matrix.m41;
+  const newTranslate = currentTranslate + direction * slideAmount;
+  const maxTranslate = -(
+    container.scrollWidth - container.parentElement.offsetWidth
+  );
+
+  // Limit the translation to prevent sliding beyond the content
+  const limitedTranslate = Math.max(maxTranslate, Math.min(0, newTranslate));
+  container.style.transform = `translateX(${limitedTranslate}px)`;
+
+  // Update button visibility
+  updateWeeklySliderButtons(limitedTranslate, maxTranslate);
+}
