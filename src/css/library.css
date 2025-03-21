@@ -445,19 +445,82 @@ a {
 }
 
 .empty-library {
-  min-width: 1280px;
-  width: 100%;
-  text-align: center;
-  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
   background: var(--card-bg);
   border-radius: 16px;
-  margin: 20px 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  margin: 2rem auto;
+  max-width: 500px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.empty-library:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+}
+
+.empty-library-icon {
+  font-size: 4rem;
+  color: var(--accent-color);
+  margin-bottom: 1.5rem;
+  animation: float 3s ease-in-out infinite;
+}
+
+.empty-library h2 {
+  font-size: 1.8rem;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  font-weight: 600;
 }
 
 .empty-library p {
-  font-size: 18px;
-  color: var(--text-color);
-  opacity: 0.8;
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.empty-library .browse-movies-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.5rem;
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.empty-library .browse-movies-btn:hover {
+  background: #e65a00;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 1, 0.3);
+}
+
+.empty-library .browse-movies-btn i {
+  font-size: 1.1rem;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 .hero-buttons {
@@ -951,6 +1014,21 @@ a {
 
   .add-to-library i {
     font-size: 1rem;
+  }
+
+  .empty-library {
+  }
+
+  .empty-library i {
+    font-size: 48px;
+  }
+
+  .empty-library h2 {
+    font-size: 24px;
+  }
+
+  .empty-library p {
+    font-size: 18px;
   }
 }
 

@@ -15,6 +15,7 @@ const apiBaseUrl = axios.create({
 });
 
 const domElements = {
+  emptyLibrary: document.querySelector('.empty-library'),
   themeSwitch: document.getElementById('theme-switch'),
   libraryList: document.querySelector('.added-library-list'),
   hero: document.querySelector('.hero'),
@@ -138,12 +139,9 @@ const displayLibraryMovies = (selectedGenre = '') => {
   const library = JSON.parse(localStorage.getItem('library') || '[]');
 
   if (library.length === 0) {
-    domElements.libraryList.innerHTML = `
-      <li class="empty-library">
-        <p>Kütüphaneniz boş. Başlamak için bazı filmler ekleyin!</p>
-      </li>
-    `;
+    domElements.libraryList.innerHTML = '';
     domElements.loadMoreBtn.style.display = 'none';
+    domElements.emptyLibrary.style.display = 'flex';
     return;
   }
 
@@ -162,14 +160,13 @@ const displayLibraryMovies = (selectedGenre = '') => {
     : library;
 
   if (filteredMovies.length === 0) {
-    domElements.libraryList.innerHTML = `
-      <li class="empty-library">
-        <p>Bu türde film bulunamadı.</p>
-      </li>
-    `;
+    domElements.libraryList.innerHTML = '';
     domElements.loadMoreBtn.style.display = 'none';
+    domElements.emptyLibrary.style.display = 'flex';
     return;
   }
+
+  domElements.emptyLibrary.style.display = 'none';
 
   // Get current page movies
   const startIndex = (currentPage - 1) * moviesPerPage;
@@ -329,14 +326,11 @@ const removeFromLibrary = movieId => {
     movieCard.remove();
   }
 
-  // kutuphane bossa
+  // Eğer kütüphane boşsa boş kütüphane kartını göster
   if (library.length === 0) {
-    domElements.libraryList.innerHTML = `
-      <li class="empty-library">
-        <p>Kütüphaneniz boş. Başlamak için bazı filmler ekleyin!</p>
-      </li>
-    `;
+    domElements.libraryList.innerHTML = '';
     domElements.loadMoreBtn.style.display = 'none';
+    domElements.emptyLibrary.style.display = 'flex';
   }
 
   // Diger sayfalara silme islemini bildir

@@ -37,6 +37,15 @@ const domElements = {
   loadMoreBtn: document.querySelector('.load-more-btn'),
   hamburgerMenu: document.querySelector('.hamburger-menu'),
   navLinks: document.querySelector('.nav-links'),
+  searchInput: document.querySelector('.search-input'),
+  yearSelect: document.querySelector('.year-select'),
+  searchButton: document.querySelector('.search-button'),
+  weeklyTrendsList: document.querySelector('.weekly-trends-list'),
+  upcomingMoviesList: document.querySelector('.upcoming-movies-list'),
+  movieDetailsModal: document.getElementById('movieDetailsModal'),
+  movieDetailsModalCloseBtn: document.querySelector(
+    '#movieDetailsModal .modal-close-btn'
+  ),
 };
 
 // Utility functions
@@ -834,8 +843,8 @@ async function handleSearch(e) {
 async function handleYearFilter(year) {
   try {
     let data;
-    if (year === 'all') {
-      // Tüm yıllar seçiliyse normal filmleri getir
+    if (!year) {
+      // Yıl seçilmemişse normal filmleri getir
       data = await fetchData('/trending/movie/week');
     } else {
       // Seçilen yıla göre filmleri getir
@@ -872,13 +881,60 @@ const updateLibraryButtons = () => {
   });
 };
 
+// Search and filter functionality
+const initSearchAndFilter = () => {
+  let searchTimeout;
+
+  domElements.searchInput.addEventListener('input', e => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      handleSearch(e.target.value);
+    }, 500);
+  });
+
+  domElements.yearSelect.addEventListener('change', e => {
+    handleYearFilter(e.target.value);
+  });
+
+  domElements.searchButton.addEventListener('click', () => {
+    handleSearch(domElements.searchInput.value);
+  });
+};
+
+// Hamburger Menu Functions
+const initHamburgerMenu = () => {
+  domElements.hamburgerMenu.addEventListener('click', () => {
+    domElements.hamburgerMenu.classList.toggle('active');
+    domElements.navLinks.classList.toggle('active');
+  });
+
+  // Close menu when clicking outside
+  document.addEventListener('click', e => {
+    if (
+      !domElements.hamburgerMenu.contains(e.target) &&
+      !domElements.navLinks.contains(e.target)
+    ) {
+      domElements.hamburgerMenu.classList.remove('active');
+      domElements.navLinks.classList.remove('active');
+    }
+  });
+
+  // Close menu when clicking on a link
+  domElements.navLinks.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      domElements.hamburgerMenu.classList.remove('active');
+      domElements.navLinks.classList.remove('active');
+    });
+  });
+};
+
 // Initialize
 const initCatalog = () => {
   initTheme();
+  initHamburgerMenu();
+  initSearchAndFilter();
+  renderMovies();
   fetchWeeklyTrendingMovies();
-  initSearch();
-  initYearFilter();
-  initPagination();
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -895,13 +951,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (e.key === 'Enter') {
       handleSearch(e);
     }
-  });
-
-  // Yıl seçicisine değişiklik olayı ekle
-  const yearSelect = document.querySelector('.year-select');
-  yearSelect.addEventListener('change', e => {
-    const selectedYear = e.target.value;
-    handleYearFilter(selectedYear);
   });
 });
 
@@ -1045,33 +1094,3 @@ const renderMovies = async (page = 1) => {
 document.addEventListener('DOMContentLoaded', () => {
   renderMovies();
 });
-
-// Hamburger Menu Functions
-const initHamburgerMenu = () => {
-  domElements.hamburgerMenu.addEventListener('click', () => {
-    domElements.hamburgerMenu.classList.toggle('active');
-    domElements.navLinks.classList.toggle('active');
-  });
-
-  // Close menu when clicking outside
-  document.addEventListener('click', e => {
-    if (
-      !domElements.hamburgerMenu.contains(e.target) &&
-      !domElements.navLinks.contains(e.target)
-    ) {
-      domElements.hamburgerMenu.classList.remove('active');
-      domElements.navLinks.classList.remove('active');
-    }
-  });
-
-  // Close menu when clicking on a link
-  domElements.navLinks.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', () => {
-      domElements.hamburgerMenu.classList.remove('active');
-      domElements.navLinks.classList.remove('active');
-    });
-  });
-};
-
-// Initialize hamburger menu
-initHamburgerMenu();
